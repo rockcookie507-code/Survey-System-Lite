@@ -130,7 +130,7 @@ const QuizEditor: React.FC = () => {
           <label className="text-[11px] font-black uppercase tracking-[0.3em] text-slate-400 mb-4 block">Assessment Title</label>
           <input 
             type="text"
-            className="w-full text-4xl font-black outline-none border-b-2 border-slate-100 focus:border-blue-600 focus:bg-slate-50/50 pb-4 transition-all text-slate-950 bg-white px-1"
+            className="w-full text-4xl font-black outline-none border-b-2 border-slate-200 focus:border-blue-600 focus:bg-slate-50/50 pb-4 transition-all text-slate-950 bg-white px-4 rounded-xl"
             value={quiz.title}
             onChange={(e) => setQuiz({ ...quiz, title: e.target.value })}
             placeholder="AI Maturity Assessment 2024"
@@ -139,7 +139,7 @@ const QuizEditor: React.FC = () => {
         <div>
           <label className="text-[11px] font-black uppercase tracking-[0.3em] text-slate-400 mb-4 block">Executive Description</label>
           <textarea 
-            className="w-full text-slate-700 font-medium text-lg outline-none border-b-2 border-slate-100 focus:border-blue-500 focus:bg-slate-50/50 pb-4 resize-none leading-relaxed bg-white px-1"
+            className="w-full text-slate-900 font-bold text-lg outline-none border-b-2 border-slate-200 focus:border-blue-500 focus:bg-slate-50/50 p-4 resize-none leading-relaxed bg-white rounded-xl shadow-inner"
             value={quiz.description}
             onChange={(e) => setQuiz({ ...quiz, description: e.target.value })}
             placeholder="Outline the scope and instructions for participants..."
@@ -159,7 +159,7 @@ const QuizEditor: React.FC = () => {
                 </span>
                 <input 
                   type="text"
-                  className="w-full font-black text-2xl border-b-2 border-slate-100 focus:border-blue-600 focus:bg-slate-50/50 outline-none pb-2 transition-all text-slate-950 bg-white px-1"
+                  className="w-full font-black text-2xl border-b-2 border-slate-100 focus:border-blue-600 focus:bg-slate-50/50 outline-none p-4 rounded-xl transition-all text-slate-950 bg-white"
                   value={q.text}
                   onChange={(e) => updateQuestion(q.id, { text: e.target.value })}
                   placeholder="Enter assessment question..."
@@ -167,7 +167,7 @@ const QuizEditor: React.FC = () => {
               </div>
               <button 
                 onClick={() => removeQuestion(q.id)}
-                className="p-3 text-slate-300 hover:text-red-600 hover:bg-red-50 rounded-xl transition-all"
+                className="p-3 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-xl transition-all"
                 title="Remove Question"
               >
                 <Trash2 size={24} />
@@ -175,12 +175,12 @@ const QuizEditor: React.FC = () => {
             </div>
 
             <div className="mb-10 flex items-center gap-6">
-              <span className="text-[11px] font-black uppercase tracking-widest text-slate-400">Response Configuration:</span>
+              <span className="text-[11px] font-black uppercase tracking-widest text-slate-500">Response Configuration:</span>
               <div className="relative">
                 <select 
                   value={q.type}
                   onChange={(e) => updateQuestion(q.id, { type: e.target.value as any })}
-                  className="bg-slate-100 border-2 border-slate-100 rounded-xl px-5 py-2.5 text-sm font-black text-slate-900 outline-none focus:ring-4 focus:ring-blue-100 focus:bg-white focus:border-blue-200 transition-all cursor-pointer appearance-none pr-10"
+                  className="bg-slate-50 border-2 border-slate-200 rounded-xl px-5 py-2.5 text-sm font-black text-slate-950 outline-none focus:ring-4 focus:ring-blue-100 focus:bg-white focus:border-blue-200 transition-all cursor-pointer appearance-none pr-10"
                 >
                   <option value="single">EXCLUSIVE CHOICE (RADIO)</option>
                   <option value="multi">MULTI-SELECT (CHECKBOX)</option>
@@ -192,15 +192,15 @@ const QuizEditor: React.FC = () => {
             </div>
 
             <div className="space-y-4">
-              <label className="text-[11px] font-black uppercase tracking-[0.3em] text-slate-400 mb-2 block px-1">Response Options & Scoring Weights</label>
+              <label className="text-[11px] font-black uppercase tracking-[0.3em] text-slate-500 mb-2 block px-1">Response Options & Scoring Weights</label>
               {q.options.map((opt, oIdx) => (
                 <div key={opt.id} className="flex items-center gap-5 group/opt">
-                  <div className="w-10 h-10 border-2 border-slate-200 rounded-xl flex items-center justify-center text-xs text-slate-900 font-black bg-slate-50 uppercase tracking-tighter shadow-sm">
+                  <div className="w-10 h-10 border-2 border-slate-200 rounded-xl flex items-center justify-center text-xs text-slate-950 font-black bg-slate-50 uppercase tracking-tighter shadow-sm">
                     {String.fromCharCode(65 + oIdx)}
                   </div>
                   <input 
                     type="text"
-                    className="flex-1 bg-slate-50 border-2 border-transparent focus:border-blue-200 focus:bg-white rounded-2xl px-6 py-4 outline-none transition-all font-bold text-slate-900 shadow-sm"
+                    className="flex-1 bg-white border-2 border-slate-200 focus:border-blue-300 focus:bg-white rounded-2xl px-6 py-4 outline-none transition-all font-bold text-slate-950 shadow-sm placeholder:text-slate-300"
                     value={opt.text}
                     onChange={(e) => updateOption(q.id, opt.id, { text: e.target.value })}
                     placeholder="Describe the response tier..."
@@ -208,15 +208,15 @@ const QuizEditor: React.FC = () => {
                   <div className="flex flex-col items-center">
                     <input 
                       type="number"
-                      className="w-20 bg-slate-100 border-2 border-transparent focus:border-blue-200 focus:bg-white rounded-2xl px-3 py-4 outline-none text-center font-black text-blue-700 shadow-sm"
+                      className="w-20 bg-white border-2 border-slate-200 focus:border-blue-300 focus:bg-white rounded-2xl px-3 py-4 outline-none text-center font-black text-blue-700 shadow-sm"
                       value={opt.score}
                       onChange={(e) => updateOption(q.id, opt.id, { score: parseInt(e.target.value) || 0 })}
                     />
-                    <span className="text-[8px] font-black text-slate-400 mt-1 uppercase tracking-[0.2em]">Tier Weight</span>
+                    <span className="text-[8px] font-black text-slate-400 mt-1 uppercase tracking-[0.2em]">Weight</span>
                   </div>
                   <button 
                     onClick={() => removeOption(q.id, opt.id)}
-                    className="p-3 text-slate-200 hover:text-red-500 hover:bg-red-50 rounded-xl opacity-0 group-hover/opt:opacity-100 transition-all"
+                    className="p-3 text-slate-300 hover:text-red-500 hover:bg-red-50 rounded-xl opacity-0 group-hover/opt:opacity-100 transition-all"
                     title="Remove Option"
                   >
                     <Trash2 size={20} />
