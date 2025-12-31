@@ -3,12 +3,12 @@ import React, { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import { 
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, 
-  Legend, Cell 
+  Cell 
 } from 'recharts';
-import { Users, Target, Activity, Sparkles, AlertCircle, RefreshCw, BarChart2 as ChartIcon, Trash2, Clock } from 'lucide-react';
+import { Users, Target, Activity, BarChart2 as ChartIcon, Trash2, Clock, Sparkles, Loader2 } from 'lucide-react';
 import { db } from '../services/db';
-import { analyzeQuizResults } from '../services/geminiService';
 import { Quiz, Question, Submission } from '../types';
+import { analyzeQuizResults } from '../services/geminiService';
 
 const COLORS = ['#2563eb', '#7c3aed', '#db2777', '#ea580c', '#16a34a', '#334155'];
 
@@ -17,7 +17,9 @@ const Dashboard: React.FC = () => {
   const [submissions, setSubmissions] = useState<Submission[]>([]);
   const [questions, setQuestions] = useState<Question[]>([]);
   const [quiz, setQuiz] = useState<Quiz | null>(null);
-  const [aiAnalysis, setAiAnalysis] = useState<string>('');
+
+  // AI Analysis states
+  const [analysis, setAnalysis] = useState<string | null>(null);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
 
   useEffect(() => {
@@ -32,15 +34,22 @@ const Dashboard: React.FC = () => {
       setQuiz(q);
       setQuestions(db.getQuestions(id));
       setSubmissions(db.getSubmissions(id));
+      setAnalysis(null); // Clear analysis when changing assessments
     }
   };
 
-  const handleRunAnalysis = async () => {
+  const handleGenerateAI = async () => {
     if (submissions.length === 0) return;
     setIsAnalyzing(true);
-    const analysis = await analyzeQuizResults(submissions, questions);
-    setAiAnalysis(analysis);
-    setIsAnalyzing(false);
+    try {
+      const result = await analyzeQuizResults(submissions, questions);
+      setAnalysis(result);
+    } catch (err) {
+      console.error(err);
+      setAnalysis("An unexpected error occurred during AI analysis.");
+    } finally {
+      setIsAnalyzing(false);
+    }
   };
 
   const handleDeleteSubmission = (sid: string) => {
@@ -77,17 +86,7 @@ const Dashboard: React.FC = () => {
       <div className="flex justify-between items-start pb-8 border-b border-slate-200">
         <div>
           <h2 className="text-4xl font-black text-slate-950 tracking-tight">{quiz.title}</h2>
-          <p className="text-slate-600 mt-2 font-medium text-lg">LexMaturity Executive Analytics & Consulting Suite</p>
-        </div>
-        <div className="flex gap-4">
-           <button 
-            onClick={handleRunAnalysis}
-            disabled={isAnalyzing || submissions.length === 0}
-            className="flex items-center gap-2 bg-blue-600 text-white px-8 py-4 rounded-2xl font-black shadow-2xl shadow-blue-200 hover:scale-[1.02] active:scale-[0.98] transition-all disabled:opacity-50"
-          >
-            {isAnalyzing ? <RefreshCw className="animate-spin" size={20} /> : <Sparkles className="text-blue-300" size={20} fill="currentColor" />}
-            Generate Consultant Analysis
-          </button>
+          <p className="text-slate-600 mt-2 font-medium text-lg">LexMaturity Executive Analytics Suite</p>
         </div>
       </div>
 
@@ -123,6 +122,62 @@ const Dashboard: React.FC = () => {
               ? new Date(submissions[0].submittedAt).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })
               : 'Awaiting Data'}
           </p>
+        </div>
+      </div>
+
+      {/* AI Executive Insights */}
+      <div className="bg-slate-950 rounded-[2.5rem] p-10 shadow-2xl shadow-blue-900/20 text-white overflow-hidden relative border border-slate-800">
+        <div className="absolute top-0 right-0 p-8 opacity-10">
+          <Sparkles size={120} />
+        </div>
+        <div className="relative z-10">
+          <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 mb-8">
+            <div>
+              <h3 className="text-2xl font-black flex items-center gap-3">
+                <Sparkles className="text-blue-400" size={28} />
+                Executive AI Insights
+              </h3>
+              <p className="text-slate-400 font-medium mt-1 text-sm">Automated maturity gap analysis and strategic roadmap recommendations.</p>
+            </div>
+            {!analysis && !isAnalyzing && (
+              <button 
+                onClick={handleGenerateAI}
+                disabled={submissions.length === 0}
+                className="bg-blue-600 hover:bg-blue-500 disabled:opacity-50 disabled:cursor-not-allowed text-white px-8 py-3 rounded-xl font-bold flex items-center gap-2 transition-all shadow-lg shadow-blue-900/40"
+              >
+                Generate Report
+              </button>
+            )}
+          </div>
+
+          {isAnalyzing && (
+            <div className="py-16 flex flex-col items-center justify-center gap-4">
+              <Loader2 className="animate-spin text-blue-400" size={48} />
+              <p className="text-slate-400 font-bold uppercase tracking-widest text-xs animate-pulse text-center max-w-xs">
+                AI Consultant is synthesizing organizational data and benchmark metrics...
+              </p>
+            </div>
+          )}
+
+          {analysis && (
+            <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
+              <div className="bg-slate-900/50 rounded-3xl p-8 md:p-10 border border-slate-800 font-medium leading-relaxed whitespace-pre-wrap text-slate-200 text-lg shadow-inner">
+                {analysis}
+              </div>
+              <button 
+                onClick={() => setAnalysis(null)}
+                className="mt-6 text-slate-500 hover:text-white text-xs font-black uppercase tracking-widest transition-all px-4 py-2 hover:bg-slate-900 rounded-lg"
+              >
+                Clear Analysis
+              </button>
+            </div>
+          )}
+
+          {!analysis && !isAnalyzing && submissions.length === 0 && (
+            <div className="bg-slate-900/30 border border-dashed border-slate-800 rounded-2xl p-10 text-center text-slate-500 font-bold uppercase tracking-widest text-sm">
+              Insufficient submission data to generate AI insights.
+            </div>
+          )}
         </div>
       </div>
 
@@ -192,7 +247,7 @@ const Dashboard: React.FC = () => {
         </div>
       </div>
 
-      {/* Individual Question Breakdown (Bars instead of Pies) */}
+      {/* Individual Question Breakdown */}
       <div className="space-y-8 pt-6">
         <h3 className="text-3xl font-black text-slate-950 tracking-tight">Question Analysis Breakdown</h3>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
@@ -244,57 +299,6 @@ const Dashboard: React.FC = () => {
               </div>
             );
           })}
-        </div>
-      </div>
-
-      {/* AI Analysis section moved to bottom */}
-      <div className="pt-10">
-        <div className="bg-slate-950 p-12 rounded-[3rem] shadow-2xl shadow-blue-900/20 flex flex-col relative overflow-hidden">
-          <div className="absolute top-0 right-0 p-20 opacity-5 pointer-events-none">
-            <Sparkles size={300} fill="white" />
-          </div>
-          
-          <div className="flex justify-between items-center mb-10">
-            <h3 className="text-2xl font-black text-white flex items-center gap-4">
-              <Sparkles className="text-blue-400" size={32} fill="currentColor" />
-              Strategic Maturity Advisory (AI Consultant)
-            </h3>
-            <button 
-              onClick={handleRunAnalysis}
-              disabled={isAnalyzing || submissions.length === 0}
-              className="bg-white/10 hover:bg-white/20 text-white px-6 py-3 rounded-xl text-sm font-black uppercase tracking-widest border border-white/20 transition-all"
-            >
-              Refresh Report
-            </button>
-          </div>
-
-          <div className="bg-slate-900/50 rounded-[2rem] p-10 min-h-[400px] border border-slate-800 backdrop-blur-sm">
-            {aiAnalysis ? (
-              <div className="prose prose-invert prose-blue max-w-none whitespace-pre-wrap text-slate-200 font-medium leading-relaxed text-lg">
-                {aiAnalysis}
-              </div>
-            ) : isAnalyzing ? (
-              <div className="flex flex-col items-center justify-center h-full text-slate-400 gap-6 py-20">
-                <RefreshCw size={64} className="animate-spin text-blue-500" />
-                <p className="font-black text-2xl text-white uppercase tracking-[0.2em] animate-pulse">Analyzing Maturity Tiers...</p>
-              </div>
-            ) : (
-              <div className="flex flex-col items-center justify-center h-full text-slate-500 gap-8 text-center py-20 px-10">
-                <AlertCircle size={64} className="opacity-10 text-white" />
-                <div>
-                  <p className="text-2xl font-black text-slate-300 mb-2">Consultant Report Pending</p>
-                  <p className="text-slate-500 max-w-md mx-auto">Click below to initiate a comprehensive strategic review of your firm's current technology baseline.</p>
-                </div>
-                <button 
-                  onClick={handleRunAnalysis}
-                  className="bg-blue-600 hover:bg-blue-500 text-white px-10 py-5 rounded-2xl font-black uppercase tracking-[0.2em] shadow-xl shadow-blue-900/40 transition-all"
-                  disabled={submissions.length === 0}
-                >
-                  Generate Strategy
-                </button>
-              </div>
-            )}
-          </div>
         </div>
       </div>
     </div>

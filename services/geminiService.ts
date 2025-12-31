@@ -2,54 +2,63 @@
 import { GoogleGenAI } from "@google/genai";
 import { Submission, Question } from "../types";
 
-// Always use named parameter for apiKey and use process.env.API_KEY directly as per guidelines
-const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+/**
+ * Analyzes assessment submissions using Gemini 3 Pro to provide executive-level maturity insights and strategic recommendations.
+ */
+export const analyzeQuizResults = async (submissions: Submission[], questions: Question[]): Promise<string> => {
+  if (!submissions || submissions.length === 0) {
+    return "Insufficient data: No submissions found for analysis.";
+  }
 
-export const analyzeQuizResults = async (submissions: Submission[], questions: Question[]) => {
-  if (submissions.length === 0) return "No data available for analysis yet.";
+  // Initialize the Gemini API client using the environment variable API_KEY
+  // Always use the named parameter { apiKey }
+  const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
 
-  const avgScore = submissions.reduce((acc, s) => acc + s.totalScore, 0) / submissions.length;
-  
+  // Prepare a structured summary of the data for the AI model
+  const reportData = {
+    totalSubmissions: submissions.length,
+    averageScore: (submissions.reduce((acc, s) => acc + s.totalScore, 0) / submissions.length).toFixed(1),
+    breakdown: questions.map(q => {
+      const counts = q.options.map(opt => ({
+        text: opt.text,
+        count: submissions.filter(s => s.answers.find(a => a.questionId === q.id)?.optionIds.includes(opt.id)).length
+      }));
+      return { question: q.text, results: counts };
+    })
+  };
+
   const prompt = `
-    As a professional legal technology consultant, analyze the following quiz results for a law firm IT maturity assessment.
+    You are a world-class Legal Tech and AI Consultant. Analyze the following Law Firm AI Maturity Assessment data.
+    Produce a high-impact, professional executive summary in Markdown format.
     
-    Context:
-    - Assessment Name: ${questions[0]?.quizId || 'General IT Assessment'}
-    - Number of Respondents: ${submissions.length}
-    - Average Score: ${avgScore.toFixed(2)}
-    
-    Data Summary:
-    ${questions.map(q => {
-      const counts: Record<string, number> = {};
-      submissions.forEach(s => {
-        const ans = s.answers.find(a => a.questionId === q.id);
-        ans?.optionIds.forEach(oid => {
-          const opt = q.options.find(o => o.id === oid);
-          if (opt) counts[opt.text] = (counts[opt.text] || 0) + 1;
-        });
-      });
-      return `- Question: "${q.text}"\n  Responses: ${JSON.stringify(counts)}`;
-    }).join('\n')}
+    Assessment Data Summary:
+    - Total Respondents: ${reportData.totalSubmissions}
+    - Average Score: ${reportData.averageScore}
+    - Detailed Question Breakdown: ${JSON.stringify(reportData.breakdown)}
 
-    Please provide:
-    1. A summary of the current maturity level.
-    2. Key strengths identified.
-    3. Critical gaps or risks.
-    4. Three actionable recommendations for the firm's leadership.
+    The report must include:
+    1. **Executive Status**: A summary of the firm's current AI maturity posture.
+    2. **Critical Gaps**: Identify 2-3 significant weaknesses or opportunities for improvement.
+    3. **Strategic Roadmap**: 3-4 prioritized actionable steps for leadership.
+    4. **Assigned Maturity Tier**: Define where the firm sits (e.g., Laggard, Explorer, Advancing, or Leader).
 
-    Keep the tone professional, authoritative, and concise.
+    Keep the tone authoritative, concise, and professional.
   `;
 
   try {
-    // Use gemini-3-pro-preview for complex reasoning tasks like professional consulting analysis
+    // Using gemini-3-pro-preview for complex reasoning and strategic analysis tasks
     const response = await ai.models.generateContent({
       model: 'gemini-3-pro-preview',
       contents: prompt,
+      config: {
+        temperature: 0.7,
+      },
     });
-    // Property .text is correctly accessed as a getter (not a method)
-    return response.text;
+
+    // Access the .text property directly (it is not a method)
+    return response.text || "Analysis generated successfully, but no content was returned.";
   } catch (error) {
     console.error("Gemini Analysis Error:", error);
-    return "Analysis currently unavailable. Please check back later.";
+    return "The AI consultant is currently unavailable. Please verify your configuration and try again.";
   }
 };
