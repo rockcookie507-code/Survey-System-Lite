@@ -8,13 +8,13 @@ export default defineConfig(({ mode }) => {
   return {
     plugins: [react()],
     define: {
-      // Prioritize VITE_ prefixed keys for security/standard
       'process.env.API_KEY': JSON.stringify(env.VITE_API_KEY || env.API_KEY)
     },
     server: {
       port: 5173,
-      host: true, 
+      host: '0.0.0.0', // Explicitly bind to all interfaces
       strictPort: true,
+      cors: true, // Enable CORS for easier testing
       watch: {
         usePolling: true 
       }
